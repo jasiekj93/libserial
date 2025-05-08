@@ -35,12 +35,14 @@ namespace serial
 
         using Type = uint8_t;
 
-        static std::optional<Frame> deserialize(etl::span<const uint8_t> data);
-        static std::pair<std::optional<etl::span<const uint8_t>>, etl::span<const uint8_t>::iterator> find(etl::span<const uint8_t> data);
+        static std::pair<std::optional<Frame>, etl::span<const uint8_t>::iterator> find(etl::span<const uint8_t> data);
 
         Frame(Type, etl::span<const uint8_t> data);
 
         Serializer serialize();
+
+        inline auto data() const { return payload; }
+        inline auto getType() const { return type; }
 
         bool operator==(const Frame& other) const
         {
@@ -49,7 +51,8 @@ namespace serial
         }
 
     protected:
-        static std::pair<std::optional<etl::span<const uint8_t>>, etl::span<const uint8_t>::iterator> findInBuffer(etl::span<const uint8_t> data);
+        static std::pair<std::optional<Frame>, etl::span<const uint8_t>::iterator> findInBuffer(etl::span<const uint8_t> data);
+        static std::optional<Frame> deserialize(etl::span<const uint8_t> data);
 
     private:
         Type type;

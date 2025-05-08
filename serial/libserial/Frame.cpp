@@ -2,34 +2,7 @@
 
 using namespace serial;
 
-std::optional<Frame> Frame::deserialize(etl::span<const uint8_t> data)
-{
-    if(data.size() < MIN_SIZE)
-        return std::nullopt;
-    
-    if(data[0] != START_FLAG)
-        return std::nullopt;
-    
-    auto type = data[1];
-
-    if(data[2] != PAYLOAD_START)
-        return std::nullopt;
-    
-    auto payloadStart = std::next(data.begin(), 3);
-    auto payloadEnd = std::find(payloadStart, data.end(), PAYLOAD_END);
-
-    if(payloadEnd == data.end())
-        return std::nullopt;
-
-    auto end = std::find(payloadEnd, data.end(), END_FLAG);
-
-    if(end != std::prev(data.end()))
-        return std::nullopt;
-
-    return Frame(type, etl::span<const uint8_t>{payloadStart, payloadEnd});
-}
-
-std::pair<std::optional<etl::span<const uint8_t>>, etl::span<const uint8_t>::iterator> Frame::find(etl::span<const uint8_t> data)
+std::pair<std::optional<Frame>, etl::span<const uint8_t>::iterator> Frame::find(etl::span<const uint8_t> data)
 {
     auto begin = data.begin();
 
@@ -75,7 +48,7 @@ Serializer Frame::serialize()
     return serializer;
 }
 
-std::pair<std::optional<etl::span<const uint8_t>>, etl::span<const uint8_t>::iterator> Frame::findInBuffer(etl::span<const uint8_t> data)
+std::pair<std::optional<Frame>, etl::span<const uint8_t>::iterator> Frame::findInBuffer(etl::span<const uint8_t> data)
 {
     if(data.size() < MIN_SIZE)
         return { std::nullopt, data.end() };
@@ -105,5 +78,19 @@ std::pair<std::optional<etl::span<const uint8_t>>, etl::span<const uint8_t>::ite
     if(Crc::validate(etl::span<const uint8_t>{std::next(payloadStart), payloadEnd}, crc) == false)
         return { std::nullopt, std::next(end) };
 
-    return { etl::span<const uint8_t>{start, std::next(end)}, std::next(end) };
+    return { deserialize({start, std::next(end)}), std::next(end) };
 }
+
+std::optional<Frame> Frame::deserialize(etl::span<const uint8_t> data)
+{
+    auto type = data[1];
+
+    auto payloadStart = std::next(data.begin(), 3);
+    auto payloadEnd = std::find(payloadStart, data.end(), PAYLOAD_END);
+
+    if(payloadEnd == data.end())
+        return std::nullopt;
+
+    return Frame(type, etl::span<const uint8_t>{payloadStart, payloadEnd});
+}
+
