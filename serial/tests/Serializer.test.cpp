@@ -12,6 +12,27 @@ using namespace serial;
 
 TEST_GROUP(SerializerTest)
 {
+    class TestSerializable : public Serializable
+    {
+    public:
+        TestSerializable() = default;
+
+        void serialize(Serializer& serializer) const override
+        {
+            serializer.string(name)
+                .delim()
+                .incrementLevel();
+            
+            for (const auto& number : numbers)
+                serializer.ascii(number).delim();
+            
+            serializer.decrementLevel();
+        }
+
+        std::string name;
+        std::vector<uint8_t> numbers;
+    };
+
 	void setup()
 	{
 
@@ -68,6 +89,34 @@ TEST(SerializerTest, serialize_changeLevel)
         .delim()
         .ascii(static_cast<uint16_t>(1))
         .number(static_cast<uint16_t>(0xABCD));
+
+    auto data = serializer.getData();
+
+    CHECK_EQUAL(expected.size(), data.size());
+    MEMCMP_EQUAL(expected.data(), data.data(), expected.size());
+}
+
+TEST(SerializerTest, serialize_object)
+{
+    std::vector<uint8_t> expected = { 
+        '1', Serializer::MIN_LEVEL,
+        'T', 'e', 's', 't', Serializer::MIN_LEVEL + 1, 
+        'A', 'B', Serializer::MIN_LEVEL + 2, 
+        'C', 'D', Serializer::MIN_LEVEL + 2,
+        Serializer::MIN_LEVEL,
+        'W', 'F'};
+
+    Serializer serializer;
+
+    TestSerializable testObject;
+    testObject.name = "Test";
+    testObject.numbers = { 0xAB, 0xCD };
+
+    serializer.ascii(true)
+        .delim()
+        .object(testObject)
+        .delim()
+        .string("WF");
 
     auto data = serializer.getData();
 

@@ -13,12 +13,20 @@
 
 #include <etl/span.h>
 
+#include <libserial/Serializable.hpp>
+
 namespace serial
 {
     class Deserializer
     {
     public:
-        Deserializer(etl::span<const uint8_t> data, uint8_t delimiter = '\0');
+        static constexpr uint8_t MAX_LEVEL = 255;
+        static constexpr uint8_t MIN_LEVEL = 128;
+
+        Deserializer();
+        Deserializer(etl::span<const uint8_t> data);
+
+        Deserializer& deserialize(etl::span<const uint8_t> data);
 
         inline auto count() const { return indexes.size(); }
 
@@ -36,12 +44,15 @@ namespace serial
         std::optional<uint64_t> getAsciiUint64(int) const;
         std::optional<bool> getAsciiBool(int) const;
 
-        etl::span<const uint8_t> getData(int) const;
+        std::optional<etl::span<const uint8_t>> getData(int) const;
 
+        Deserializer& incrementLevel();
+        Deserializer& decrementLevel();
 
     protected:
 
     private:
+        uint8_t level = MIN_LEVEL;
         etl::span<const uint8_t> data;
         std::vector<int> indexes;
     };

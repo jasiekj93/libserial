@@ -110,6 +110,15 @@ Serializer& Serializer::data(etl::span<const uint8_t> span)
     return *this;
 }
 
+Serializer& Serializer::object(const Serializable& object)
+{
+    incrementLevel();
+    object.serialize(*this);
+    decrementLevel();
+
+    return *this;
+}
+
 Serializer& Serializer::incrementLevel()
 {
     if(level < MAX_LEVEL)

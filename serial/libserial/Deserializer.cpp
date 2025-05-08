@@ -3,23 +3,40 @@
 
 using namespace serial;
 
-Deserializer::Deserializer(etl::span<const uint8_t> d, uint8_t delimiter)
-    : data(d)
+Deserializer::Deserializer()
+    : level(MIN_LEVEL)
+    , data()
+    , indexes()
 {
+}
+
+Deserializer::Deserializer(etl::span<const uint8_t> data)
+    : Deserializer()
+{
+    deserialize(data);
+}
+
+Deserializer& Deserializer::deserialize(etl::span<const uint8_t> d)
+{
+    data = d;
+    indexes.clear();
+
     if(data.empty())
-        return;
+        return *this;
     
     auto it = data.begin();
     indexes.push_back(0);
 
     while(true)
     {
-        it = std::find(it, data.end(), delimiter);
+        it = std::find(it, data.end(), level);
         if(it == data.end() or it == std::prev(data.end()))
             break;
         indexes.push_back(std::distance(data.begin(), std::next(it)));
         ++it;
     }
+
+    return *this;
 }
 
 std::optional<std::string> Deserializer::getString(int index) const
@@ -193,13 +210,29 @@ std::optional<bool> Deserializer::getAsciiBool(int index) const
     return static_cast<bool>(data[start] - '0');
 }
 
-etl::span<const uint8_t> Deserializer::getData(int index) const
+std::optional<etl::span<const uint8_t>> Deserializer::getData(int index) const
 {
     if(index < 0 or index >= indexes.size())
-        return {};
+        return std::nullopt;
 
     auto start = indexes[index];
     auto end = (index + 1 < indexes.size()) ? (indexes[index + 1] - 1) : data.size();
 
     return etl::span<const uint8_t>(data.begin() + start, data.begin() + end);
+}
+
+Deserializer& Deserializer::incrementLevel()
+{
+    if(level < MAX_LEVEL)
+        ++level;
+
+    return *this;
+}
+
+Deserializer& Deserializer::decrementLevel()
+{
+    if(level > MIN_LEVEL)
+        --level;
+    
+    return *this;
 }

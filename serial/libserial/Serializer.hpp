@@ -12,6 +12,8 @@
 
 #include <etl/span.h>
 
+#include <libserial/Serializable.hpp>
+
 namespace serial
 {
     class Serializer
@@ -40,6 +42,7 @@ namespace serial
         Serializer& string(const char* str);
 
         Serializer& data(etl::span<const uint8_t>);
+        Serializer& object(const Serializable&);
 
         Serializer& incrementLevel();
         Serializer& decrementLevel();
