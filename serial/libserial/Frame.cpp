@@ -64,7 +64,7 @@ std::pair<std::optional<Frame>, etl::span<const uint8_t>::iterator> Frame::findI
     if (payloadEnd == data.end())
         return { std::nullopt, payloadEnd };
 
-    auto end = std::find(data.begin(), data.end(), END_FLAG);
+    auto end = std::find(payloadEnd, data.end(), END_FLAG);
     if (end == data.end())
         return { std::nullopt, end };
 

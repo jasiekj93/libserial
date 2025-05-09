@@ -119,6 +119,38 @@ Serializer& Serializer::object(const Serializable& object)
     return *this;
 }
 
+Serializer& Serializer::serializer(const Serializer& other)
+{
+    buffer.insert(buffer.end(), other.buffer.begin(), other.buffer.end());
+    return *this;
+}
+
+Serializer& Serializer::container(etl::span<const Serializable> objects)
+{
+    incrementLevel();
+    for(auto& obj : objects)
+    {
+        object(obj);
+        delim();
+    }
+    decrementLevel();
+
+    return *this;
+}
+
+Serializer& Serializer::container(etl::span<const std::string> objects)
+{
+    incrementLevel();
+    for(auto& obj : objects)
+    {
+        string(obj);
+        delim();
+    }
+    decrementLevel();
+
+    return *this;
+}
+
 Serializer& Serializer::incrementLevel()
 {
     if(level < MAX_LEVEL)

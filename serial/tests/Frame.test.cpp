@@ -186,3 +186,44 @@ TEST(FrameTest, find_twoFrames)
     CHECK(iterator2 == std::prev(bufferSpan.end(), 3));
 }
 
+TEST(FrameTest, find_withTypeOfEndFlag)
+{
+    std::vector<uint8_t> buffer = { Frame::START_FLAG, Frame::END_FLAG, Frame::PAYLOAD_START, 0xAB, 0xCD, Frame::PAYLOAD_END, 0x15, 0xBF, Frame::END_FLAG };
+    std::vector<uint8_t> payload = { 0xAB, 0xCD };
+    etl::span<const uint8_t> bufferSpan(buffer.data(), buffer.size());
+
+    auto [result, iterator] = Frame::find(buffer);
+
+    CHECK(result.has_value());
+    CHECK(result.has_value());
+    CHECK(Frame(Frame::END_FLAG, payload) == result.value()); 
+    CHECK(iterator == bufferSpan.end());
+}
+
+TEST(FrameTest, find_withTypeOfStartFlag)
+{
+    std::vector<uint8_t> buffer = { Frame::START_FLAG, Frame::START_FLAG, Frame::PAYLOAD_START, 0xAB, 0xCD, Frame::PAYLOAD_END, 0x15, 0xBF, Frame::END_FLAG };
+    std::vector<uint8_t> payload = { 0xAB, 0xCD };
+    etl::span<const uint8_t> bufferSpan(buffer.data(), buffer.size());
+
+    auto [result, iterator] = Frame::find(buffer);
+
+    CHECK(result.has_value());
+    CHECK(result.has_value());
+    CHECK(Frame(Frame::START_FLAG, payload) == result.value()); 
+    CHECK(iterator == bufferSpan.end());
+}
+
+TEST(FrameTest, find_withTypeOfPayloadStartFlag)
+{
+    std::vector<uint8_t> buffer = { Frame::START_FLAG, Frame::PAYLOAD_START, Frame::PAYLOAD_START, 0xAB, 0xCD, Frame::PAYLOAD_END, 0x15, 0xBF, Frame::END_FLAG };
+    std::vector<uint8_t> payload = { 0xAB, 0xCD };
+    etl::span<const uint8_t> bufferSpan(buffer.data(), buffer.size());
+
+    auto [result, iterator] = Frame::find(buffer);
+
+    CHECK(result.has_value());
+    CHECK(result.has_value());
+    CHECK(Frame(Frame::PAYLOAD_START, payload) == result.value()); 
+    CHECK(iterator == bufferSpan.end());
+}

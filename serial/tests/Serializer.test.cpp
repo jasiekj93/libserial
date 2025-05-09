@@ -123,3 +123,30 @@ TEST(SerializerTest, serialize_object)
     CHECK_EQUAL(expected.size(), data.size());
     MEMCMP_EQUAL(expected.data(), data.data(), expected.size());
 }
+
+TEST(SerializerTest, serialize_containerAscii)
+{
+    std::vector<uint8_t> expected = { 
+        'A', 'B', 'C', 'D', Serializer::MIN_LEVEL,
+        '0', '0', Serializer::MIN_LEVEL + 1,
+        '0', '1', Serializer::MIN_LEVEL + 1,
+        '0', '2', Serializer::MIN_LEVEL + 1,
+        '0', '3', Serializer::MIN_LEVEL + 1,
+        Serializer::MIN_LEVEL,
+        '0', '1', '2', '3'
+        };
+
+    std::vector<uint8_t> numbers = { 0x00, 0x01, 0x02, 0x03 };
+    Serializer serializer;
+
+    serializer.string("ABCD")
+        .delim()
+        .containerAscii(etl::span<const uint8_t>(numbers))
+        .delim()
+        .ascii(static_cast<uint16_t>(0x0123));
+
+    auto data = serializer.getData();
+
+    CHECK_EQUAL(expected.size(), data.size());
+    MEMCMP_EQUAL(expected.data(), data.data(), expected.size());
+}

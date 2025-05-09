@@ -43,6 +43,16 @@ namespace serial
 
         Serializer& data(etl::span<const uint8_t>);
         Serializer& object(const Serializable&);
+        Serializer& serializer(const Serializer&);
+
+        Serializer& container(etl::span<const Serializable>);
+        Serializer& container(etl::span<const std::string>);
+
+        template <typename T>
+        Serializer& containerAscii(etl::span<const T>);
+
+        template <typename T>
+        Serializer& containerNumber(etl::span<const T>);
 
         Serializer& incrementLevel();
         Serializer& decrementLevel();
@@ -56,4 +66,33 @@ namespace serial
         uint8_t level = MIN_LEVEL;
         std::vector<uint8_t> buffer;
     };
+
+
+    template <typename T>
+    Serializer& Serializer::containerAscii(etl::span<const T> objects)
+    {
+        incrementLevel();
+        for (auto& obj : objects)
+        {
+            ascii(obj);
+            delim();
+        }
+        decrementLevel();
+
+        return *this;
+    }
+
+    template <typename T>
+    Serializer& Serializer::containerNumber(etl::span<const T> objects)
+    {
+        incrementLevel();
+        for (auto& obj : objects)
+        {
+            number(obj);
+            delim();
+        }
+        decrementLevel();
+
+        return *this;
+    }
 }
